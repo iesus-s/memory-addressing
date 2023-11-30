@@ -28,6 +28,9 @@ if __name__ == '__main__':
     check = 0
     full = 0
     page_faults = 0
+    disk_references = 0
+    write = 0
+    dirty_write = 0
 
     # Unpack All Processes
     for counter in range(len(text_input)):
@@ -46,6 +49,8 @@ if __name__ == '__main__':
         offset = bin(executing[1])[9:]
         # Getting W/R Command
         command = executing[2]
+        if command == "W":
+            write += 1
 
         # Variable to check if process is complete
         done = 0
@@ -69,11 +74,16 @@ if __name__ == '__main__':
                     main["Virtual Address"] = int(virtual_address)
                     main["Process"] = process
                     main["Memory"] = 512
+                    if command == "W":
+                        main["Dirty Bit"] = 1
                     check += 1
                     done = 1
                     full += 1
                     found = 1
+                    disk_references += 1
+                    page_faults += 1
 
+        # RANDOM REPLACEMENT ALGORITHM
         # If Main Memory is full and Page Fault
         if full == 32 and found == 0:
             rand = randint(0, 31)
@@ -81,14 +91,25 @@ if __name__ == '__main__':
             victim_page["Virtual Address"] = int(virtual_address)
             victim_page["Process"] = process
             victim_page["Memory"] = 512
+            # Check if Dirty Bit on Victim Page
+            if victim_page["Dirty Bit"] == 1:
+                disk_references += 1
+            # Check if New Process Writes
+            if command == "W":
+                victim_page["Dirty Bit"] = 1
+                dirty_write += 1
+            else:
+                victim_page["Dirty Bit"] = 0
             main_memory[rand] = victim_page
             check += 1
             done = 1
             found = 1
             page_faults += 1
+            disk_references += 1
 
     print("Page Faults: ", page_faults)
-    print("Checker: ", check)
+    print("Disk References: ", disk_references)
+    print("Dirty Write: ", dirty_write)
 
     # print(executing)
     # print(bin(executing[1]))
