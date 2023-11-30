@@ -13,7 +13,7 @@ if __name__ == '__main__':
     main_memory = []
     for count in range(32):
         main_memory.append({"Process": 0, "Virtual Address": 0, "Reference Bit": 0, "Dirty Bit": 0,
-                            "Memory": 0})
+                            "Memory": 0, "Disk Address": 0})
 
     # Create Addressing Variables
     virtual_page_number = 0
