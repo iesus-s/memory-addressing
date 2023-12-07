@@ -86,6 +86,7 @@ if __name__ == '__main__':
         # RANDOM REPLACEMENT ALGORITHM
         # If Main Memory is full and Page Fault
         if full == 32 and found == 0:
+            # CREATES OUR RANDOM INTEGER BETWEEN 0 AND 31
             rand = randint(0, 31)
             victim_page = main_memory[rand]
             victim_page["Virtual Address"] = int(virtual_address)
