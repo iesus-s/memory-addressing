@@ -1,6 +1,7 @@
 import pandas as pd
 from random import randint
 import sys
+import random
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -13,7 +14,7 @@ if __name__ == '__main__':
     main_memory = []
     for count in range(32):
         main_memory.append({"Process": 0, "Virtual Address": 0, "Reference Bit": 0, "Dirty Bit": 0,
-                            "Memory": 0})
+                            "Memory": 0, "Disk Address": 0})
 
     # Create Addressing Variables
     virtual_page_number = 0
@@ -24,6 +25,21 @@ if __name__ == '__main__':
     text_file = sys.argv[1]
     text_input = pd.read_csv(text_file, sep="\t", header=None)
 
+    num_page_tables = max(text_input[0])   # total amount of page tables to make and amount of total processes
+
+    # print(num_page_tables)                  # test
+
+    num_entries = 128
+
+    # Create the page tables
+    # Number of page tables with 128 entries each
+    VPT_big = []    # 2D list of "x" page tables(rows) 128 columns deep
+    for count1 in range(num_page_tables):
+        VPT = []
+        for count2 in range(num_entries):
+            VPT.append({"Process": count1+1, "Virtual Address": 0, "Reference Bit": 0, "Dirty Bit": 0, "Memory": 0})
+        VPT_big.append(VPT)
+
     # Test Variable
     check = 0
     full = 0
@@ -31,6 +47,7 @@ if __name__ == '__main__':
     disk_references = 0
     write = 0
     dirty_write = 0
+    process_num = 0     # process/task of the given address
 
     # Unpack All Processes
     for counter in range(len(text_input)):
@@ -44,13 +61,25 @@ if __name__ == '__main__':
         # Getting VPN from Process
         vpn = bin(executing[1])[:9]
         # Remove initial '0b'
-        virtual_page_number = vpn[2:]
+        virtual_page_number = vpn[2:]       # VPN in bit form
+        # convert to decimal
+        int_vpn = int(virtual_page_number, 2)
+
         # Getting Offset from Process
         offset = bin(executing[1])[9:]
         # Getting W/R Command
         command = executing[2]
         if command == "W":
             write += 1
+
+        # fill in the VPT given the process number and int_vpn
+        VPT_big[process-1][int_vpn-1]["Process"] = process
+        VPT_big[process-1][int_vpn-1]["Virtual Address"] = int_vpn
+        VPT_big[process-1][int_vpn-1]["Reference Bit"] += 1
+        VPT_big[process-1][int_vpn-1]["Dirty Bit"] = 0
+        VPT_big[process-1][int_vpn-1]["Memory"] = 512   # not sure what's supposed to be here
+
+        # FIFO and LRU algos will append/require more data inserted
 
         # Variable to check if process is complete
         done = 0
@@ -62,16 +91,16 @@ if __name__ == '__main__':
             # Check if process is not complete
             if found == 0:
                 # Check for Process and Virtual Page Number
-                if main["Process"] == process and main["Virtual Address"] == int("".join(str(virtual_address)), 2):
+                if main["Process"] == process and main["Virtual Address"] == int_vpn:
                     found = 1
                     check += 1
 
         # If page not in main memory (Page Fault)
-        if found == 0 and full != 32:
+        if found == 0:
             for main in main_memory:
                 # Check for Empty space in Main Memory
                 if main["Memory"] == 0 and done == 0:
-                    main["Virtual Address"] = int("".join(str(virtual_address)), 2)
+                    main["Virtual Address"] = int_vpn
                     main["Process"] = process
                     main["Memory"] = 512
                     if command == "W":
@@ -86,11 +115,12 @@ if __name__ == '__main__':
         # RANDOM REPLACEMENT ALGORITHM
         # If Main Memory is full and Page Fault
         if full == 32 and found == 0:
+            seed = sys.argv[2]
+            random.seed(seed)
             # CREATES OUR RANDOM INTEGER BETWEEN 0 AND 31
-            rand = randint(0, 31)
-            # Our VICTIM PAGE HAS BEEN CHOSEN
+            rand = random.randint(0, 31)
             victim_page = main_memory[rand]
-            victim_page["Virtual Address"] = int("".join(str(virtual_address)), 2)
+            victim_page["Virtual Address"] = int_vpn
             victim_page["Process"] = process
             victim_page["Memory"] = 512
             # Check if Dirty Bit on Victim Page
@@ -109,11 +139,7 @@ if __name__ == '__main__':
             page_faults += 1
             disk_references += 1
 
+    print("---RAND---")
     print("Page Faults: ", page_faults)
     print("Disk References: ", disk_references)
     print("Dirty Write: ", dirty_write)
-
-    # print(executing)
-    # print(bin(executing[1]))
-    # print("Virtual Page Number: ", virtual_page_number)
-    # print("Offset: ", offset)
