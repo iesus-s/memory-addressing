@@ -54,7 +54,7 @@ if __name__ == '__main__':
         # Getting VPN from Process
         vpn = bin(executing[1])[:9]
         # Remove initial '0b'
-        virtual_page_number = vpn[2:]       # VPN in bit form
+        virtual_page_number = vpn[2:]
         # convert to decimal
         int_vpn = int(virtual_page_number, 2)
 
@@ -143,4 +143,3 @@ if __name__ == '__main__':
     print("Page Faults: ", page_faults)
     print("Disk References: ", disk_references)
     print("Dirty Write: ", dirty_write)
-
